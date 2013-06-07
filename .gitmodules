@@ -1,3 +1,6 @@
 [submodule "go-sqlite3"]
 	path = go-sqlite3
 	url = https://github.com/laurent22/go-sqlite3.git
+[submodule "ripple"]
+	path = ripple
+	url = https://github.com/laurent22/ripple.git

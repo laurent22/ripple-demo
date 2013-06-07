@@ -1,83 +1,53 @@
 package rippledemo
 
 import (
-	"../../ripple"
 	"../models"
+	"../ripple"
+	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"strconv"
 )
 
-// ==========================================
-// Define some basic controller for testing
-// ==========================================
-
-type UserController struct {
-	userCollection rippledemo.UserCollection
-	friends        []rippledemo.FriendshipModel
+type TodoController struct {
+	db *sql.DB
 }
 
-func NewUserController() *UserController {
-	output := new(UserController)
-
-	// Build some data for testing. In a real application, this would probably
-	// come from a database. Also rather than being built here, it would
-	// be accessed directly from each individual controller action.
-
-	output.userCollection.Users = make(map[int]rippledemo.UserModel)
-	output.userCollection.Add(rippledemo.UserModel{0, "John"})
-	output.userCollection.Add(rippledemo.UserModel{0, "Paul"})
-	output.userCollection.Add(rippledemo.UserModel{0, "Ringo"})
-	output.userCollection.Add(rippledemo.UserModel{0, "George"})
-
-	output.friends = append(output.friends, rippledemo.FriendshipModel{1, 2})
-	output.friends = append(output.friends, rippledemo.FriendshipModel{1, 3})
-	output.friends = append(output.friends, rippledemo.FriendshipModel{2, 4})
-	output.friends = append(output.friends, rippledemo.FriendshipModel{3, 4})
-
+func NewTodoController(db *sql.DB) *TodoController {
+	output := new(TodoController)
+	output.db = db
 	return output
 }
 
-func (this *UserController) Get(ctx *ripple.Context) {
-	userId, _ := strconv.Atoi(ctx.Params["id"])
-	if userId > 0 {
-		ctx.Response.Body = this.userCollection.Get(userId)
-	} else {
-		ctx.Response.Body = this.userCollection.GetAll()
-	}
+func (this *TodoController) Get(ctx *ripple.Context) {
+	todoId, _ := strconv.Atoi(ctx.Params["id"])
+	todo, _ := models.TodoById(this.db, todoId)
+	ctx.Response.Body = todo
 }
 
-func (this *UserController) Post(ctx *ripple.Context) {
+func (this *TodoController) Post(ctx *ripple.Context) {
 	body, _ := ioutil.ReadAll(ctx.Request.Body)
-	var user rippledemo.UserModel
-	json.Unmarshal(body, &user)
-	ctx.Response.Body = this.userCollection.Add(user)
+	var todo models.Todo
+	json.Unmarshal(body, &todo)
+	
+	todo.Save(this.db)
+	ctx.Response.Body = todo
 }
 
-func (this *UserController) Put(ctx *ripple.Context) {
+func (this *TodoController) Put(ctx *ripple.Context) {
 	body, _ := ioutil.ReadAll(ctx.Request.Body)
-	userId, _ := strconv.Atoi(ctx.Params["id"])
-	var user rippledemo.UserModel
-	json.Unmarshal(body, &user)
-	ctx.Response.Body = this.userCollection.Set(userId, user)
+	var todo models.Todo
+	json.Unmarshal(body, &todo)
+
+	todoId, _ := strconv.Atoi(ctx.Params["id"])
+	todo.Id = todoId
+	
+	todo.Save(this.db)
+	ctx.Response.Body = todo
 }
 
-func (this *UserController) GetFriends(ctx *ripple.Context) {
-	userId, _ := strconv.Atoi(ctx.Params["id"])
-	var output []rippledemo.UserModel
-	for _, d := range this.friends {
-		if d.UserId1 == userId {
-			output = append(output, this.userCollection.Get(d.UserId2))
-		} else if d.UserId2 == userId {
-			output = append(output, this.userCollection.Get(d.UserId1))
-		}
-	}
-	ctx.Response.Body = output
-}
-
-func (this *UserController) PostFriends(ctx *ripple.Context) {
-	body, _ := ioutil.ReadAll(ctx.Request.Body)
-	userId, _ := strconv.Atoi(ctx.Params["id"])
-	friendId, _ := strconv.Atoi(string(body))
-	this.friends = append(this.friends, rippledemo.FriendshipModel{userId, friendId})
+func (this *TodoController) Delete(ctx *ripple.Context) {
+	todoId, _ := strconv.Atoi(ctx.Params["id"])
+	todo, _ := models.TodoById(this.db, todoId)
+	todo.Delete(this.db)
 }

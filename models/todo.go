@@ -1,45 +1,60 @@
-package rippledemo
+package models
 
-// ======================================
-// Define some basic model for testing
-// ======================================
+import (
+	"database/sql"	
+)
 
-type UserModel struct {
-	Id   int
-	Name string
+type Todo struct {
+	Id int
+	UserId string
+	Text string
 }
 
-type FriendshipModel struct {
-	UserId1 int
-	UserId2 int
-}
-
-type UserCollection struct {
-	Users      map[int]UserModel
-	nextUserId int
-}
-
-func (this *UserCollection) Add(user UserModel) UserModel {
-	this.nextUserId++
-	user.Id = this.nextUserId
-	this.Users[this.nextUserId] = user
-	return user
-}
-
-func (this *UserCollection) Get(id int) UserModel {
-	return this.Users[id]
-}
-
-func (this *UserCollection) Set(id int, user UserModel) UserModel {
-	user.Id = id
-	this.Users[id] = user
-	return user
-}
-
-func (this *UserCollection) GetAll() []UserModel {
-	var output []UserModel
-	for _, d := range this.Users {
-		output = append(output, d)
+func TodosByUserId(db *sql.DB, userId string) ([]*Todo, error) {
+	rows, err := db.Query("SELECT id FROM todos WHERE user_id = ?", userId)
+	if err != nil { return nil, err } 
+	var output []*Todo
+	for rows.Next() {
+		var todoId int
+		rows.Scan(&todoId)
+		todo, _ := TodoById(db, todoId)
+		output = append(output, todo)
 	}
-	return output
+	return output, nil
+}
+
+func TodoById(db *sql.DB, id int) (*Todo, error) {
+	row := db.QueryRow("SELECT * FROM todos WHERE id = ?", id)
+	
+	var dbId int
+	var dbUser_id string
+	var dbText string
+	err := row.Scan(&dbId, &dbUser_id, &dbText)
+	if err != nil { return nil, err }
+	
+	todo := new(Todo)
+	todo.Id = dbId
+	todo.UserId = dbUser_id
+	todo.Text = dbText
+	
+	return todo, nil
+}
+
+func (this *Todo) Save(db *sql.DB) error {
+	if this.Id > 0 {
+		db.Exec("UPDATE todos SET text = ? WHERE id = ?", this.Text, this.Id)
+	} else {
+		result, err := db.Exec("INSERT INTO todos(user_id, text) VALUES(?, ?)", this.UserId, this.Text)
+		if err != nil { return err }
+		todoId, _ := result.LastInsertId()
+		this.Id = int(todoId)
+	}
+	
+	return nil
+}
+
+func (this *Todo) Delete(db *sql.DB) error {
+	db.Exec("DELETE FROM todos WHERE id = ?", this.Id)
+	this.Id = 0
+	return nil
 }
