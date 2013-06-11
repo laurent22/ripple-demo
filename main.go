@@ -7,6 +7,9 @@ import (
 	"log"
 	"net/http"
 	_ "./go-sqlite3"
+	"io/ioutil"
+	"strings"
+	"os"
 )
 
 func initializeDatabase() (*sql.DB, error) {
@@ -17,6 +20,21 @@ func initializeDatabase() (*sql.DB, error) {
 	if err != nil { return nil, err }
 	
 	return db, nil
+}
+
+// Very simple HTTP handler for testing the web application and API
+func webAppHandler(w http.ResponseWriter, r *http.Request) {
+	t := strings.Split(r.URL.Path, "/")
+	filePath := "html/" + t[len(t) - 1]
+	
+	fi, err := os.Stat(filePath)
+	if fi == nil && err != nil {
+		// Doesn't exist
+		return
+	}
+	
+	content, _ := ioutil.ReadFile(filePath)
+	w.Write(content)
 }
 
 func main() {
@@ -38,5 +56,13 @@ func main() {
 	app.AddRoute(ripple.Route{Pattern: ":_controller/:id/"})
 	app.AddRoute(ripple.Route{Pattern: ":_controller"})
 	
-	http.ListenAndServe(":8080", app)
+	// Handle the front-end
+	http.HandleFunc("/app/", webAppHandler)
+	
+	// Handle the REST API	
+	app.SetBaseUrl("/api/")
+	http.HandleFunc("/api/", app.ServeHTTP)
+	
+	log.Println("Starting server...")
+	http.ListenAndServe(":8080", nil)
 }
