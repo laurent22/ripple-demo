@@ -25,8 +25,10 @@ func initializeDatabase() (*sql.DB, error) {
 // Very simple HTTP handler for testing the web application and API
 func webAppHandler(w http.ResponseWriter, r *http.Request) {
 	t := strings.Split(r.URL.Path, "/")
-	filePath := "html/" + t[len(t) - 1]
-	
+	filename := t[len(t) - 1]
+	if filename == "" { filename = "index.html" } // Default to index.html
+	filePath := "html/" + filename
+		
 	fi, err := os.Stat(filePath)
 	if fi == nil && err != nil {
 		// File doesn't exist

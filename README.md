@@ -1,3 +1,5 @@
+# Todo demo for Ripple
+
 This is a todo demo for [Ripple](https://github.com/laurent22/ripple), the REST API framework for Go.
 
 The demo creates a SQLlite database and defines two controllers:
@@ -21,9 +23,9 @@ The front end itself is a JS application that fetches, creates and deletes tasks
 
     go run main.go
     
-The front-end application will then be at `http://localhost/app/:8080`
+The front-end application will then be at `http://localhost:8080/app/`
 
-And the REST API itself is at `http://localhost/api/:8080` and defines the following paths:
+And the REST API itself is at `http://localhost:8080/api/` and defines the following paths:
 
     GET /users/:userId/todos
     GET /todos
