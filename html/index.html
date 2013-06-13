@@ -1,11 +1,82 @@
 <html>
-<script type="text/javascript" src="jquery-2.0.2.min.js"></script>
+<head>
+	<script src="jquery-2.0.2.min.js"></script>
+	<script src="store.min.js"></script>
+<head>
 <body>
-<div class="todo"></div>
+	
+<div class="todo">
+	<label for="todo">Add todo: </label><input name="todo"/>
+	<ul class="list">
+	</ul>
+</div>
+
 <script>
+
+var app = {};
+app.apiUrl = "/api/";
+app.user = null;
+
+app.ajax = function(method, path, data, success) {	
+	var options = {};
+	options.contentType = "application/json";
+	options.type = method;
+	options.url = app.apiUrl + path;
+	if (data) options.data = JSON.stringify(data);
+	options.success = success;
+	
+	return $.ajax(options);
+}
+
+app.refreshList = function() {
+	app.ajax('GET', 'users/' + app.user.id + '/todos', null, function(data) {
+		$('.list').html('');
+		if (!data) return;
+		
+		for (var i = 0; i < data.length; i++) {
+			var todo = data[i];
+			$('.list').append('<li>' + todo.Text + ' ' + '<a data-id="' + todo.Id + '" class="delete" href="#">Delete</a></li>');
+		}
+	});
+}
+
+app.initialize = function() {
+	var userId = store.get('userId');
+	if (!userId) userId = '' + Math.round(Math.random() * (new Date()).getTime() / 10000000); // random ID for testing
+	store.set('userId', userId);
+	app.user = {
+		id: userId	
+	};
+	
+	$('input[name="todo"]').keypress(function(event) {
+		if (event.which == 13) {
+			var todo = {
+				Id: null,
+				UserId: app.user.id,
+				Text: $('input[name="todo"]').val()
+			}
+			app.ajax('POST', 'todos', todo, function() {
+				app.refreshList();
+			});
+			$('input[name="todo"]').val('');
+		}
+	});
+	
+	$('.list').on('click', '.delete', function(event) {
+		event.preventDefault();
+		var todoId = $(event.currentTarget).attr('data-id');
+		app.ajax('DELETE', 'todos/' + todoId).always(function() {
+			app.refreshList();
+		});
+	});
+	
+	app.refreshList();
+}
+
 $(document).ready(function() {
-	console.info("test");
+	app.initialize();
 });
+
 </script>
 </body>
 </html>
