@@ -17,7 +17,10 @@ func NewUserController(db *sql.DB) *UserController {
 }
 
 func (this *UserController) GetTodos(ctx *ripple.Context) {
+	// Get the user ID
 	userId, _ := ctx.Params["id"]
+	// Get the todos of this user
 	todos, _ := models.TodosByUserId(this.db, userId)
+	// Return them
 	ctx.Response.Body = todos
 }

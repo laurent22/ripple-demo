@@ -17,6 +17,7 @@ var app = {};
 app.apiUrl = "/api/";
 app.user = null;
 
+// Wrapper to make calls to the REST API.
 app.ajax = function(method, path, data, success) {	
 	var options = {};
 	options.contentType = "application/json";
@@ -28,6 +29,7 @@ app.ajax = function(method, path, data, success) {
 	return $.ajax(options);
 }
 
+// Refresh the list of todos.
 app.refreshList = function() {
 	app.ajax('GET', 'users/' + app.user.id + '/todos', null, function(data) {
 		$('.list').html('');
@@ -48,6 +50,7 @@ app.initialize = function() {
 		id: userId	
 	};
 	
+	// Add a todo.
 	$('input[name="todo"]').keypress(function(event) {
 		if (event.which == 13) {
 			var todo = {
@@ -62,6 +65,7 @@ app.initialize = function() {
 		}
 	});
 	
+	// Delete a todo.
 	$('.list').on('click', '.delete', function(event) {
 		event.preventDefault();
 		var todoId = $(event.currentTarget).attr('data-id');

@@ -29,7 +29,7 @@ func webAppHandler(w http.ResponseWriter, r *http.Request) {
 	
 	fi, err := os.Stat(filePath)
 	if fi == nil && err != nil {
-		// Doesn't exist
+		// File doesn't exist
 		return
 	}
 	

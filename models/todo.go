@@ -4,12 +4,14 @@ import (
 	"database/sql"	
 )
 
+// A simple todo model
 type Todo struct {
 	Id int
 	UserId string
 	Text string
 }
 
+// Gets the tasks of the given user
 func TodosByUserId(db *sql.DB, userId string) ([]*Todo, error) {
 	rows, err := db.Query("SELECT id FROM todos WHERE user_id = ?", userId)
 	if err != nil { return nil, err } 
@@ -23,6 +25,7 @@ func TodosByUserId(db *sql.DB, userId string) ([]*Todo, error) {
 	return output, nil
 }
 
+// Gets the given todo
 func TodoById(db *sql.DB, id int) (*Todo, error) {
 	row := db.QueryRow("SELECT * FROM todos WHERE id = ?", id)
 	
@@ -40,6 +43,7 @@ func TodoById(db *sql.DB, id int) (*Todo, error) {
 	return todo, nil
 }
 
+// Saves the todo to the database.
 func (this *Todo) Save(db *sql.DB) error {
 	if this.Id > 0 {
 		db.Exec("UPDATE todos SET text = ? WHERE id = ?", this.Text, this.Id)
@@ -53,6 +57,7 @@ func (this *Todo) Save(db *sql.DB) error {
 	return nil
 }
 
+// Delete the todo from the database.
 func (this *Todo) Delete(db *sql.DB) error {
 	db.Exec("DELETE FROM todos WHERE id = ?", this.Id)
 	this.Id = 0
